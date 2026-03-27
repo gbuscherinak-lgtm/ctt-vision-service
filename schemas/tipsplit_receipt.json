@@ -1,0 +1,12 @@
+{
+  "document_type": "receipt",
+  "fields": [
+    "restaurant_name",
+    "subtotal",
+    "tax",
+    "tip",
+    "total",
+    "item_count",
+    "line_items"
+  ]
+}

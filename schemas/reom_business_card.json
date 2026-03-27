@@ -1,0 +1,12 @@
+{
+  "document_type": "business_card",
+  "fields": [
+    "full_name",
+    "company",
+    "title",
+    "email",
+    "phone",
+    "address",
+    "website"
+  ]
+}

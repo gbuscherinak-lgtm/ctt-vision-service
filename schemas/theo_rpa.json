@@ -1,0 +1,17 @@
+{
+  "document_type": "RPA",
+  "fields": [
+    "purchase_price",
+    "close_of_escrow_date",
+    "emd_amount",
+    "acceptance_date",
+    "apn",
+    "county",
+    "loan_amount",
+    "down_payment",
+    "loan_type",
+    "title_company",
+    "seller_agent_name",
+    "appraisal_waiver"
+  ]
+}
