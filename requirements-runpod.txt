@@ -1,0 +1,6 @@
+runpod
+git+https://github.com/huggingface/transformers
+accelerate
+torch
+Pillow
+qwen-vl-utils[decord]==0.0.8

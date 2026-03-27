@@ -1,10 +1,10 @@
 """
 RunPod Serverless Handler for CTT Vision Service.
-Wraps model_loader functions in RunPod's handler pattern.
+Uses runpod_model_loader (direct HuggingFace transformers, no Ollama).
 
 Usage (RunPod):
-    Set handler: runpod_handler.handler
     Docker: see Dockerfile.runpod
+    Entrypoint: python -u runpod_handler.py
 
 Author: Closing Time Technologies LLC
 Created: 2026-03-27
@@ -15,7 +15,12 @@ import time
 
 import runpod
 
-from model_loader import generate, check_ollama, parse_json_response
+from runpod_model_loader import generate, check_health, parse_json_response, load_model
+
+# Load model at container start (not on first request)
+print("[RunPod] Loading model at startup...")
+load_model()
+print("[RunPod] Model loaded. Handler ready.")
 
 
 def handler(event):
@@ -24,13 +29,11 @@ def handler(event):
     action = input_data.get("action")
 
     if action == "health":
-        return {"ok": True, "data": check_ollama()}
+        return {"ok": True, "data": check_health()}
 
     image = input_data.get("image")  # base64
     if not image:
         return {"ok": False, "error": "Missing 'image' field", "code": "MISSING_IMAGE"}
-
-    mime_type = input_data.get("mime_type", "image/png")
 
     if action == "ocr":
         prompt = "Extract all text from this image. Return the raw text exactly as it appears."

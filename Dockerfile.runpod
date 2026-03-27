@@ -1,10 +1,18 @@
-FROM python:3.11-slim
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt runpod
+# System deps
+RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
+
+# Python deps — RunPod + transformers stack
+COPY requirements-runpod.txt .
+RUN pip install --no-cache-dir -r requirements-runpod.txt
 
 COPY . .
 
-CMD ["python3", "runpod_handler.py"]
+# Model downloads to /tmp/hf_cache on first worker start
+ENV HF_HOME=/tmp/hf_cache
+ENV PYTHONUNBUFFERED=1
+
+CMD ["python", "-u", "runpod_handler.py"]
