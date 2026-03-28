@@ -11,14 +11,9 @@ COPY runpod_handler.py .
 COPY runpod_model_loader.py .
 COPY schemas/ ./schemas/
 
-# Pre-download model during build (not at container start)
-# Uses snapshot_download to cache weights without loading into memory
-ENV HF_HOME=/app/hf_cache
-RUN python -c "from huggingface_hub import snapshot_download; \
-    print('[Build] Downloading Qwen2.5-VL-7B-Instruct...'); \
-    snapshot_download('Qwen/Qwen2.5-VL-7B-Instruct'); \
-    print('[Build] Model cached.')"
-
+# Model downloads at first worker start (~2-3 min cold start)
+# Baking into image made it 24.5GB — too large for serverless workers to pull
+ENV HF_HOME=/tmp/hf_cache
 ENV PYTHONUNBUFFERED=1
 
 CMD ["python", "-u", "runpod_handler.py"]
