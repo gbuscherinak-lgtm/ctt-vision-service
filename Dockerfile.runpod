@@ -1,9 +1,6 @@
-FROM runpod/pytorch:2.4.0-py3.11-cuda12.1.0-devel-ubuntu22.04
+FROM runpod/pytorch:1.0.3-cu1290-torch260-ubuntu2204
 
 WORKDIR /app
-
-# System deps
-RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /var/lib/apt/lists/*
 
 # Python deps — RunPod + transformers stack
 COPY requirements-runpod.txt .
@@ -15,13 +12,12 @@ COPY runpod_model_loader.py .
 COPY schemas/ ./schemas/
 
 # Pre-download model during build (not at container start)
-# This bakes the model weights into the image — no download at runtime
+# Uses snapshot_download to cache weights without loading into memory
 ENV HF_HOME=/app/hf_cache
-RUN python -c "from transformers import Qwen2_5_VLForConditionalGeneration, AutoProcessor; \
+RUN python -c "from huggingface_hub import snapshot_download; \
     print('[Build] Downloading Qwen2.5-VL-7B-Instruct...'); \
-    Qwen2_5_VLForConditionalGeneration.from_pretrained('Qwen/Qwen2.5-VL-7B-Instruct', torch_dtype='auto'); \
-    AutoProcessor.from_pretrained('Qwen/Qwen2.5-VL-7B-Instruct'); \
-    print('[Build] Model downloaded and cached.')"
+    snapshot_download('Qwen/Qwen2.5-VL-7B-Instruct'); \
+    print('[Build] Model cached.')"
 
 ENV PYTHONUNBUFFERED=1
 
