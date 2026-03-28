@@ -1,4 +1,4 @@
-FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+FROM runpod/pytorch:2.4.0-py3.11-cuda12.1.0-devel-ubuntu22.04
 
 WORKDIR /app
 
@@ -9,10 +9,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends git && rm -rf /
 COPY requirements-runpod.txt .
 RUN pip install --no-cache-dir -r requirements-runpod.txt
 
-COPY . .
+# Copy application code
+COPY runpod_handler.py .
+COPY runpod_model_loader.py .
+COPY schemas/ ./schemas/
 
-# Model downloads to /tmp/hf_cache on first worker start
-ENV HF_HOME=/tmp/hf_cache
+# Pre-download model during build (not at container start)
+# This bakes the model weights into the image — no download at runtime
+ENV HF_HOME=/app/hf_cache
+RUN python -c "from transformers import Qwen2_5_VLForConditionalGeneration, AutoProcessor; \
+    print('[Build] Downloading Qwen2.5-VL-7B-Instruct...'); \
+    Qwen2_5_VLForConditionalGeneration.from_pretrained('Qwen/Qwen2.5-VL-7B-Instruct', torch_dtype='auto'); \
+    AutoProcessor.from_pretrained('Qwen/Qwen2.5-VL-7B-Instruct'); \
+    print('[Build] Model downloaded and cached.')"
+
 ENV PYTHONUNBUFFERED=1
 
 CMD ["python", "-u", "runpod_handler.py"]

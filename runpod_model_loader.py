@@ -40,19 +40,25 @@ def load_model():
     if _model is not None:
         return _model, _processor
 
-    logger.info(f"[RunPodLoader] Loading {MODEL_ID}...")
+    print(f"[RunPodLoader] Loading {MODEL_ID}...")
     start = time.time()
 
-    _model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-        MODEL_ID,
-        torch_dtype=torch.bfloat16,
-        device_map="auto",
-    )
-    _processor = AutoProcessor.from_pretrained(MODEL_ID)
+    try:
+        _model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+            MODEL_ID,
+            torch_dtype=torch.bfloat16,
+            device_map="auto",
+        )
+        _processor = AutoProcessor.from_pretrained(MODEL_ID)
 
-    elapsed = round(time.time() - start, 1)
-    logger.info(f"[RunPodLoader] Model loaded in {elapsed}s")
-    return _model, _processor
+        elapsed = round(time.time() - start, 1)
+        print(f"[RunPodLoader] Model loaded in {elapsed}s on {_model.device}")
+        return _model, _processor
+    except Exception as e:
+        print(f"[RunPodLoader] FATAL: Model load failed: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 def check_health() -> dict:

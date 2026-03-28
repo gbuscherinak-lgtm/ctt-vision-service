@@ -18,6 +18,14 @@ import runpod
 from runpod_model_loader import generate, check_health, parse_json_response, load_model
 
 # Load model at container start (not on first request)
+print("[RunPod] Container starting...")
+print(f"[RunPod] Python: {__import__('sys').version}")
+print(f"[RunPod] PyTorch: {__import__('torch').__version__}")
+print(f"[RunPod] CUDA available: {__import__('torch').cuda.is_available()}")
+if __import__('torch').cuda.is_available():
+    print(f"[RunPod] GPU: {__import__('torch').cuda.get_device_name(0)}")
+    print(f"[RunPod] VRAM: {__import__('torch').cuda.get_device_properties(0).total_mem / 1024**3:.1f} GB")
+
 print("[RunPod] Loading model at startup...")
 load_model()
 print("[RunPod] Model loaded. Handler ready.")
