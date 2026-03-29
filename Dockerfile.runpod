@@ -14,8 +14,8 @@ COPY runpod_handler.py .
 COPY runpod_model_loader.py .
 COPY schemas/ ./schemas/
 
-# Model downloads at first worker start (~2-3 min cold start)
-ENV HF_HOME=/tmp/hf_cache
+# Model cached on Network Volume — no download at runtime
+ENV HF_HOME=/runpod-volume/hf_cache
 ENV PYTHONUNBUFFERED=1
 
 CMD ["python", "-u", "runpod_handler.py"]
