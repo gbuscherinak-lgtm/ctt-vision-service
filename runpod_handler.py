@@ -14,21 +14,39 @@ import json
 import time
 
 import runpod
+import traceback
+import os
 
-from runpod_model_loader import generate, check_health, parse_json_response, load_model
-
-# Load model at container start (not on first request)
 print("[RunPod] Container starting...")
 print(f"[RunPod] Python: {__import__('sys').version}")
-print(f"[RunPod] PyTorch: {__import__('torch').__version__}")
-print(f"[RunPod] CUDA available: {__import__('torch').cuda.is_available()}")
-if __import__('torch').cuda.is_available():
-    print(f"[RunPod] GPU: {__import__('torch').cuda.get_device_name(0)}")
-    print(f"[RunPod] VRAM: {__import__('torch').cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB")
+print(f"[RunPod] HF_HOME: {os.environ.get('HF_HOME', 'not set')}")
+print(f"[RunPod] /runpod-volume exists: {os.path.exists('/runpod-volume')}")
+if os.path.exists('/runpod-volume'):
+    print(f"[RunPod] /runpod-volume contents: {os.listdir('/runpod-volume')}")
+    if os.path.exists('/runpod-volume/hf_cache'):
+        print(f"[RunPod] hf_cache contents: {os.listdir('/runpod-volume/hf_cache')}")
 
-print("[RunPod] Loading model at startup...")
-load_model()
-print("[RunPod] Model loaded. Handler ready.")
+try:
+    import torch
+    print(f"[RunPod] PyTorch: {torch.__version__}")
+    print(f"[RunPod] CUDA: {torch.cuda.is_available()}")
+    if torch.cuda.is_available():
+        print(f"[RunPod] GPU: {torch.cuda.get_device_name(0)}")
+except Exception as e:
+    print(f"[RunPod] PyTorch check failed: {e}")
+
+try:
+    from runpod_model_loader import generate, check_health, parse_json_response, load_model
+    print("[RunPod] Loading model at startup...")
+    load_model()
+    print("[RunPod] Model loaded. Handler ready.")
+except Exception as e:
+    print(f"[RunPod] MODEL LOAD FAILED: {e}")
+    traceback.print_exc()
+    generate = None
+    check_health = lambda: {"error": str(e)}
+    parse_json_response = None
+    load_model = None
 
 
 def handler(event):
@@ -38,6 +56,9 @@ def handler(event):
 
     if action == "health":
         return {"ok": True, "data": check_health()}
+
+    if generate is None:
+        return {"ok": False, "error": "Model not loaded", "code": "MODEL_NOT_LOADED"}
 
     image = input_data.get("image")  # base64
     if not image:
