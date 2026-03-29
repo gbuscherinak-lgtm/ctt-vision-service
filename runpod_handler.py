@@ -41,10 +41,11 @@ try:
     load_model()
     print("[RunPod] Model loaded. Handler ready.")
 except Exception as e:
-    print(f"[RunPod] MODEL LOAD FAILED: {e}")
+    _startup_error = str(e)
+    print(f"[RunPod] MODEL LOAD FAILED: {_startup_error}")
     traceback.print_exc()
     generate = None
-    check_health = lambda: {"error": str(e)}
+    check_health = lambda: {"error": _startup_error, "model_loaded": False}
     parse_json_response = None
     load_model = None
 
