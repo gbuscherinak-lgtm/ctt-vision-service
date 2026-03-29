@@ -1,10 +1,11 @@
-FROM runpod/pytorch:1.0.3-cu1290-torch260-ubuntu2204
+FROM runpod/base:0.6.2-cuda12.2.0
 
 WORKDIR /app
 
-# Python deps — RunPod + transformers stack
+# Install PyTorch + deps (smaller than full pytorch base image)
 COPY requirements-runpod.txt .
-RUN pip install --no-cache-dir -r requirements-runpod.txt
+RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cu121 && \
+    pip install --no-cache-dir -r requirements-runpod.txt
 
 # Copy application code
 COPY runpod_handler.py .
@@ -12,7 +13,6 @@ COPY runpod_model_loader.py .
 COPY schemas/ ./schemas/
 
 # Model downloads at first worker start (~2-3 min cold start)
-# Baking into image made it 24.5GB — too large for serverless workers to pull
 ENV HF_HOME=/tmp/hf_cache
 ENV PYTHONUNBUFFERED=1
 
