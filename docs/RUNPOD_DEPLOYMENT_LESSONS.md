@@ -100,6 +100,39 @@
 
 ---
 
+### 9. Init Timeout Too Short for Cold Start
+**Error:** `context deadline exceeded` on container create.
+
+**Cause:** RunPod's default init timeout (~7 min) is too short when image pull (5+ min) + model load (~18s) exceeds the window. Container gets killed before handler registers.
+
+**Fix:** Set `RUNPOD_INIT_TIMEOUT=600` (10 min) in both Dockerfile ENV and RunPod Dashboard environment variables. Belt and suspenders.
+
+**Lesson:** Always set `RUNPOD_INIT_TIMEOUT` explicitly for model-serving containers. Default is too aggressive for large images or slow first pulls.
+
+---
+
+### 10. decord Dependency Missing for qwen-vl-utils
+**Error:** `ImportError: No module named 'decord'` at container startup.
+
+**Cause:** `qwen-vl-utils` imports `decord` for video frame extraction. Not in requirements, crashes before handler registers.
+
+**Fix:** Added `decord>=0.6.0` to requirements + `ffmpeg libsm6 libxext6` system deps in Dockerfile. Also added defensive import stub in `runpod_model_loader.py` as fallback (decord not needed for image-only inference).
+
+**Lesson:** Check ALL transitive dependencies of vision libraries. `qwen-vl-utils` needs `decord` even if you only use image features.
+
+---
+
+### 11. Unpinned transformers Version
+**Error:** Potential breaking changes in transformers 5.x for Qwen2.5-VL model class.
+
+**Cause:** `transformers>=5.0` is an open-ended floor that lets pip resolve to untested versions.
+
+**Fix:** Pinned to `transformers>=4.45.0,<5.0` — the range validated during the successful RTX 4090 pod test.
+
+**Lesson:** Always pin upper bounds on ML framework dependencies. Breaking API changes between major versions are common.
+
+---
+
 ## The Solution That Works
 
 ### Architecture

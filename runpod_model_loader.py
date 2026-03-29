@@ -24,7 +24,19 @@ import time
 import torch
 from PIL import Image
 from transformers import Qwen2_5_VLForConditionalGeneration, AutoProcessor
-from qwen_vl_utils import process_vision_info
+
+try:
+    from qwen_vl_utils import process_vision_info
+except ImportError as e:
+    if "decord" in str(e):
+        # decord not needed for image-only inference — stub it
+        import sys
+        sys.modules['decord'] = type(sys)('decord')
+        sys.modules['decord'].VideoReader = None
+        sys.modules['decord'].cpu = lambda: None
+        from qwen_vl_utils import process_vision_info
+    else:
+        raise
 
 logger = logging.getLogger(__name__)
 
