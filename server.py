@@ -18,7 +18,14 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-import model_loader
+# Auto-detect runtime: RunPod Pod (HuggingFace direct) vs Local (Ollama)
+if os.environ.get("HF_HOME") and not os.environ.get("OLLAMA_URL"):
+    import runpod_model_loader as model_loader
+    model_loader.load_model()
+    _RUNTIME = "runpod_transformers"
+else:
+    import model_loader
+    _RUNTIME = "ollama"
 
 load_dotenv()
 
@@ -125,11 +132,15 @@ class DescribeRequest(BaseModel):
 @app.get("/api/v1/health")
 def health():
     """Health check — model status, uptime, request count."""
-    status = model_loader.check_ollama()
+    if _RUNTIME == "runpod_transformers":
+        status = model_loader.check_health()
+    else:
+        status = model_loader.check_ollama()
     return {
         "ok": True,
         "data": {
             **status,
+            "runtime": _RUNTIME,
             "uptime_seconds": round(time.time() - START_TIME),
             "request_count": REQUEST_COUNT,
         },
