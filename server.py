@@ -86,45 +86,12 @@ START_TIME = time.time()
 REQUEST_COUNT = 0
 CTT_VISION_KEY = os.getenv("CTT_VISION_KEY", "")
 
-# ============================================
-# SELF-SLEEP (Pod stops itself after idle timeout)
-# ============================================
-
-_IDLE_TIMEOUT = int(os.environ.get("VISION_IDLE_TIMEOUT", "300"))
-_POD_ID = os.environ.get("RUNPOD_POD_ID", "")
-_SLEEP_API_KEY = os.environ.get("RUNPOD_API_KEY", "")
-_idle_timer = None
-_timer_lock = threading.Lock()
-
+# Self-sleep DISABLED — Pod runs 24/7 (CTO decision 2026-03-29)
+# Re-enable by setting VISION_IDLE_TIMEOUT, RUNPOD_POD_ID, RUNPOD_API_KEY on Pod
 
 def _touch():
-    """Reset idle timer on every real request (not health checks)."""
-    global _idle_timer
-    with _timer_lock:
-        if _idle_timer:
-            _idle_timer.cancel()
-        _idle_timer = threading.Timer(_IDLE_TIMEOUT, _self_sleep)
-        _idle_timer.daemon = True
-        _idle_timer.start()
-
-
-def _self_sleep():
-    """Stop this Pod after idle timeout. All products share this timer."""
-    if not _POD_ID or not _SLEEP_API_KEY:
-        logger.warning("Cannot self-sleep: RUNPOD_POD_ID or RUNPOD_API_KEY not set")
-        return
-    try:
-        import runpod
-        runpod.api_key = _SLEEP_API_KEY
-        logger.info(f"Idle for {_IDLE_TIMEOUT}s — stopping Pod to save costs.")
-        runpod.stop_pod(_POD_ID)
-    except Exception as e:
-        logger.error(f"Self-sleep failed: {e}")
-
-
-# Start first idle countdown
-_touch()
-logger.info(f"Self-sleep timer started: {_IDLE_TIMEOUT}s idle timeout")
+    """No-op — self-sleep disabled."""
+    pass
 
 
 # ============================================
