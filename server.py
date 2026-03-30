@@ -344,4 +344,5 @@ def describe(req: DescribeRequest, x_ctt_vision_key: str = Header(None)):
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", "8790"))
-    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=True)
+    is_local = not os.environ.get("HF_HOME")
+    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=is_local)
